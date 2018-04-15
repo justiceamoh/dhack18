@@ -10,6 +10,10 @@ from xgboost import XGBClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
+from gensim.models.doc2vec import Doc2Vec, TaggedDocument
+from nltk import RegexpTokenizer
+from nltk.corpus import stopwords
+
 ## Load Dataset
 fname = 'yelp.json'
 df    = pd.read_json(fname)
@@ -83,22 +87,58 @@ acc   = accuracy_score(ytest, ypred)
 print("Accuracy: %.2f%%" % (acc * 100.0))
 
 
+#################################################################
+### ON TEST SET
+#################################################################
 
 # ## Test on Test Set
-# dt    = pd.read_json('yelpHeld.json')
-# for col in ['business_id','user_id']:
-#     dt[col] = dt[col].astype('category')
+dt    = pd.read_json('yelpHeld.json')
+for col in ['business_id','user_id']:
+    dt[col] = dt[col].astype('category')
 
-# dt['user_id'] = dt.user_id.cat.codes
-# dt['business_id'] = dt.business_id.cat.codes
+# Convert to similar output
+dt['user_id'] = dt.user_id.cat.codes
+dt['business_id'] = dt.business_id.cat.codes
+dt['month'] = dt.date.dt.month
+dt['day']   = dt.date.dt.day
+dt['year']  = dt.date.dt.year
+dt['dOw']   = dt.date.dt.dayofweek
+dt.drop(columns=['date'])
+dt.head()
 
-# vt_data = model.docvecs.infer_vector(v) for v in dt. 
+# Tokenize
+data  = dt.text.values
+label = dt.review_id.values
+tokenizer = RegexpTokenizer(r'\w+')
+stopset   = set(stopwords.words('english'))
+
+# Get docs
+docs      = []
+for i in range(len(data)):
+    tag    = label[i]
+    words  = data[i].lower()
+    words = tokenizer.tokenize(words)
+    words = [w for w in words if not w in stopset]
+    docs.append(words)
+
+# Get doc2vec features of test set
+v_data = [vmodel.infer_vector(doc) for doc in docs]
 
 
-# # Generate Submission
-# if gen_submission:
-#     csvname='submission.csv'
-#     ds = pd.DataFrame({'review_id': review_id,
-#                        'stars'    : ypred})
-#     ds.to_csv(csvname,index=False)
-#     print 'Submission file saved as ' + csvname
+# Append to other features
+v_data = np.vstack(v_data)
+x_data = dt[fcols].values
+x_data = np.append(x_data,v_data,axis=-1)
+
+# Finally predict
+ypred = model.predict(x_data)
+ypred = [int(value) for value in ypred]
+
+
+# Generate Submission
+review_id = dt.review_id.values.tolist()
+csvname='submission.csv'
+ds = pd.DataFrame({'review_id': review_id,
+                   'stars'    : ypred})
+ds.to_csv(csvname,index=False)
+print 'Submission file saved as ' + csvname
