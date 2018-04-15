@@ -1,2 +1,5 @@
+*.npy
+*.model
+*.DS*
 *.json
 *.pyc
