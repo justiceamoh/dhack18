@@ -31,7 +31,7 @@ for i in range(len(data)):
     docs.append(TaggedDocument(tokens,tag))
 
 
-ndim  = 100
+ndim  = 50
 model = Doc2Vec(dm=0,vector_size=ndim, window=10, min_count=3,
                 alpha=0.025, min_alpha=0.025, workers=cores)
 model.build_vocab(docs)
@@ -46,7 +46,7 @@ for epoch in range(10):
 
 
 # Saving the created model
-model.save('doc2vec100.model')
+model.save('doc2vec50.model')
 print 'model saved'
 
 # model = Doc2Vec.load('doc2vec.model')
