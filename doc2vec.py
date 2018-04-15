@@ -17,6 +17,8 @@ label = df.review_id.values
 df    = None
 gc.collect()
 
+# data  = data[:500]
+# label = label[:500]
 
 tokenizer = RegexpTokenizer(r'\w+')
 stopset   = set(stopwords.words('english'))
@@ -28,10 +30,10 @@ for i in range(len(data)):
     words  = data[i].lower()
     tokens = tokenizer.tokenize(words)
     tokens = [w for w in tokens if not w in stopset]
-    docs.append(TaggedDocument(tokens,tag))
+    docs.append(TaggedDocument(tokens,[str(tag)]))
 
 
-ndim  = 50
+ndim  = 100
 model = Doc2Vec(dm=0,vector_size=ndim, window=10, min_count=3,
                 alpha=0.025, min_alpha=0.025, workers=cores)
 model.build_vocab(docs)
@@ -46,7 +48,7 @@ for epoch in range(10):
 
 
 # Saving the created model
-model.save('doc2vec50.model')
+model.save('doc2vec100.model')
 print 'model saved'
 
 # model = Doc2Vec.load('doc2vec.model')

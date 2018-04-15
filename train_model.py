@@ -46,7 +46,7 @@ ids    = df.review_id.values
 # Get Vectorized texts
 v_data = []
 for i in ids:
-    v = model.docvecs[i]
+    v = vmodel.docvecs[i]
     v_data.append(v)
 
 v_data = np.vstack(v_data)
@@ -73,9 +73,9 @@ print 'Size of Valid set: {}'.format(len(xvalid))
 # Training & Evaluation
 print '\nTraining & evaluating model...'
 # Fit model no training data
-model = XGBClassifier()
+model = XGBClassifier(n_estimators=250,njobs=4,objective='multi:softmax',num_class=5)
 model.fit(xtrain, ytrain)
-ypred = model.predict(xtest)
+ypred = model.predict(xvalid)
 ypred = [round(value) for value in ypred]
 
 # evaluate predictions
